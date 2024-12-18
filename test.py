@@ -1,124 +1,132 @@
-import pyautogui
+import logging
 import cv2
+import os
+import easyocr
+import requests
+from bs4 import BeautifulSoup
+from fuzzywuzzy import fuzz, process
+from utils import capture_screen
 import numpy as np
-import time
-import pytesseract  # For OCR, optional for advanced detection
 
-# Tesseract configuration
-pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+# Initialize EasyOCR Reader
+reader = easyocr.Reader(['en'])
 
-# Paths for templates
-TEMPLATES = {
-    "desktop": "images/desktop/desktop.png",
-    "btd6_icon": "images/desktop/btd6_icon.png",
-    "loading_game": "images/desktop/btd6_launch.png",
-    "start_screen": "images/screens/startScreen.png",
-    "start_button": "images/buttons/buttonStart.png",
-}
+# Configure logging
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-def capture_screen():
-    """
-    Capture the current screen as a NumPy array.
-    """
-    screenshot = pyautogui.screenshot()
-    return cv2.cvtColor(np.array(screenshot), cv2.COLOR_RGB2BGR)
 
-def match_template(frame, template_path, threshold=0.8):
+def scrape_map_names():
     """
-    Match a template on the screen and return the confidence and location.
+    Scrape all map names from the Bloons TD 6 Maps category on the Bloons Fandom website.
+    :return: List of map names.
     """
-    template = cv2.imread(template_path, cv2.IMREAD_GRAYSCALE)
-    if template is None:
-        raise ValueError(f"Template image not found at {template_path}")
+    url = "https://bloons.fandom.com/wiki/Category:Bloons_TD_6_Maps"
+    logging.info(f"Scraping map names from {url}...")
 
-    frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    result = cv2.matchTemplate(frame_gray, template, cv2.TM_CCOEFF_NORMED)
-    _, max_val, _, max_loc = cv2.minMaxLoc(result)
-    return max_val, max_loc
+    response = requests.get(url)
+    if response.status_code != 200:
+        logging.error(f"Failed to retrieve the webpage. Status code: {response.status_code}")
+        return []
 
-def click_at(location, duration=0.5):
-    """
-    Click at a specific screen location.
-    """
-    pyautogui.moveTo(location[0], location[1], duration=duration)
-    pyautogui.click()
+    soup = BeautifulSoup(response.content, "html.parser")
+    map_names = set()
 
-def detect_and_click(template_path, threshold=0.8):
-    """
-    Detect a button using template matching and click it.
-    """
-    frame = capture_screen()
-    confidence, location = match_template(frame, template_path, threshold)
-    if confidence >= threshold:
-        button_center = (location[0] + templ                ate.shape[1] // 2, location[1] + template.shape[0] // 2)
-        click_at(button_center)
-        print(f"Clicked button: {template_path}")
-        return True
-    print(f"Button not found: {template_path} (Confidence: {confidence:.2f})")
-    return False
+    # Extract all map links and titles
+    for a_tag in soup.find_all("a", {"class": "category-page__member-link"}):
+        map_name = a_tag.text.strip()
+        if map_name:  # Ensure it's not empty
+            map_names.add(map_name.upper())  # Uppercase for uniformity
 
-def detect_text(frame, region=None):
-    """
-    Detect text in a specified region of the screen using OCR.
-    """
-    if region:
-        frame = frame[region[1]:region[3], region[0]:region[2]]
-    return pytesseract.image_to_string(frame)
+    map_names = list(map_names)
+    logging.info(f"Scraped {len(map_names)} map names.")
+    return map_names
 
-# Game state functions
-def is_desktop_visible():
-    """
-    Check if the desktop is visible.
-    """
-    frame = capture_screen()
-    return match_template(frame, TEMPLATES["desktop"])[0] >= 0.8
 
-def click_btd6_icon():
+def preprocess_image(image):
     """
-    Click the BTD6 desktop icon.
+    Preprocess the image for OCR.
+    :param image: Image to process.
+    :return: Preprocessed image.
     """
-    return detect_and_click(TEMPLATES["btd6_icon"])
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    _, thresh = cv2.threshold(gray, 200, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+    resized = cv2.resize(thresh, None, fx=2, fy=2, interpolation=cv2.INTER_LINEAR)
+    return resized
 
-def is_start_screen_visible():
-    """
-    Check if the game's start screen is visible.
-    """
-    frame = capture_screen()
-    return match_template(frame, TEMPLATES["start_screen"])[0] >= 0.8
 
-def game_loop():
+def fuzzy_match(detected_name, map_names):
     """
-    Main game loop to control BTD6.
+    Match the detected name to the closest name in the map list using fuzzy matching.
+    :param detected_name: Name detected via OCR.
+    :param map_names: List of official map names.
+    :return: Best match and confidence score.
     """
-    print("Starting BTD6...")
-    if is_desktop_visible():
-        if click_btd6_icon():
-            print("Game launched, waiting for the start screen...")
-            time.sleep(10)  # Wait for the game to load
-            while not is_start_screen_visible():
-                print("Waiting for the start screen...")
-                time.sleep(1)
-            print("Start screen detected. Ready to begin.")
-            detect_and_click(TEMPLATES["start_button"])
+    match, score = process.extractOne(detected_name, map_names, scorer=fuzz.token_sort_ratio)
+    return match, score
 
-# Placeholder for RL training and strategy
-def analyze_game_state():
-    """
-    Analyze the game state and return relevant metrics.
-    """
-    frame = capture_screen()
-    # Example: Extract round number, money, lives using OCR or visual markers
-    money = detect_text(frame, region=(100, 100, 200, 150))
-    round_number = detect_text(frame, region=(300, 300, 400, 350))
-    return {"money": money, "round": round_number}
 
-def place_tower(location, tower_type):
+def detect_map_names(map_names, save_tmp=True):
     """
-    Place a tower at the specified location.
+    Detect map names on the current screen and match them to the official list.
+    :param map_names: List of official map names.
+    :param save_tmp: Whether to save cropped images for debugging.
     """
-    print(f"Placing {tower_type} at {location}")
-    pyautogui.moveTo(location[0], location[1], duration=0.5)
-    pyautogui.click()
+    logging.info("Capturing the current screen...")
+    full_screen = capture_screen()
+    preprocessed_screen = preprocess_image(full_screen)
+
+    # Create tmp folder to save regions
+    tmp_folder = "tmp"
+    if save_tmp and not os.path.exists(tmp_folder):
+        os.makedirs(tmp_folder)
+
+    # Define map slots
+    screen_height, screen_width = preprocessed_screen.shape
+    map_slots = [
+        (0.17 * screen_width, 0.1 * screen_height, 0.38 * screen_width, 0.155 * screen_height),   # Top-left
+        (0.405 * screen_width, 0.1 * screen_height, 0.6 * screen_width, 0.155 * screen_height),  # Top-middle
+        (0.61 * screen_width, 0.1 * screen_height, 0.85 * screen_width, 0.145 * screen_height),  # Top-right
+        (0.17 * screen_width, 0.4 * screen_height, 0.38 * screen_width, 0.455 * screen_height),  # Bottom-left
+        (0.405 * screen_width, 0.4 * screen_height, 0.6 * screen_width, 0.455 * screen_height),  # Bottom-middle
+        (0.61 * screen_width, 0.4 * screen_height, 0.85 * screen_width, 0.445 * screen_height)   # Bottom-right
+    ]
+
+    detected_names = []
+
+    for idx, (x1, y1, x2, y2) in enumerate(map_slots):
+        x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+        map_region = preprocessed_screen[y1:y2, x1:x2]
+
+        # Save for debugging
+        if save_tmp:
+            region_path = os.path.join(tmp_folder, f"map_slot_{idx + 1}.png")
+            cv2.imwrite(region_path, map_region)
+            logging.info(f"Saved map slot {idx + 1} to {region_path}")
+
+        # Perform OCR
+        result = reader.readtext(map_region, detail=0)
+        detected_text = " ".join(result).strip().upper()
+        if not detected_text:
+            detected_text = "UNKNOWN"
+
+        # Fuzzy match the detected name
+        best_match, confidence = fuzzy_match(detected_text, map_names)
+        detected_names.append((detected_text, best_match, confidence))
+
+        logging.info(f"Slot {idx + 1} | Detected: {detected_text} | Matched: {best_match} (Confidence: {confidence}%)")
+
+    # Log the final detected names
+    logging.info("\n===== Final Results =====")
+    for idx, (detected, matched, confidence) in enumerate(detected_names):
+        logging.info(f"Slot {idx + 1}: Detected: {detected} | Matched: {matched} | Confidence: {confidence}%")
+
 
 if __name__ == "__main__":
-    game_loop()
+    # Step 1: Scrape map names
+    official_map_names = scrape_map_names()
+
+    # Step 2: Detect map names and match them to official names
+    if official_map_names:
+        detect_map_names(official_map_names)
+    else:
+        logging.error("No map names were scraped. Exiting.")

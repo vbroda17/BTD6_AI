@@ -224,3 +224,16 @@ def close_daily_reward_screen(threshold=0.8, duration_click=0.5):
     except (TemplateMatchException, ButtonNotFoundException):
         pass
     return False
+
+def screen_check_confidence(screenshot, template_path):
+    """
+    Check the confidence of a template match against a screenshot.
+    :param screenshot: The current screen capture.
+    :param template_path: Path to the template image.
+    :return: Confidence score of the match (0 to 1).
+    """
+    template = validate_template_path(template_path)
+    screenshot_gray = cv2.cvtColor(screenshot, cv2.COLOR_BGR2GRAY)
+    result = cv2.matchTemplate(screenshot_gray, template, cv2.TM_CCOEFF_NORMED)
+    _, max_val, _, _ = cv2.minMaxLoc(result)
+    return max_val
