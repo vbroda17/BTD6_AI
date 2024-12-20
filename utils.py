@@ -143,21 +143,24 @@ def check_current_screen(threshold=0.8):
 
 def check_daily_reward(duration=5, interval=0.1, threshold=0.8, click_duration=0.5):
     """
-    Continuously check and collect rewards within a time limit.
-    Starts by clicking on the reward chest box if detected.
-    If the chest has already been collected, it checks for the 'chest opened' template and moves on.
+    Check for the daily reward chest, claim rewards if found, and close the rewards screen.
     """
     logging.info("Starting daily reward collection...")
 
     # Step 1: Attempt to find and click the daily reward chest
     try:
         logging.info("Looking for the daily reward chest...")
-        spin_until(
+        chest_clicked = spin_until(
             lambda: click_button(DAILY_REWARD_CHEST_PATH, threshold=threshold, duration=click_duration, clicks=1),
             duration=2,
             interval=0.1
         )
-        logging.info("Daily reward chest clicked. Proceeding to collect rewards.")
+        if chest_clicked:
+            logging.info("Daily reward chest clicked. Waiting for rewards screen...")
+            time.sleep(2)  # Wait for rewards screen to load
+            claim_rewards(threshold=0.6, duration_click=click_duration)  # Call the claim_rewards function
+        else:
+            logging.warning("Failed to click the daily reward chest.")
     except ButtonNotFoundException:
         # Step 2: If chest not found, check if it's already opened
         logging.info("Daily reward chest not found. Checking if the chest was already opened...")
@@ -169,7 +172,30 @@ def check_daily_reward(duration=5, interval=0.1, threshold=0.8, click_duration=0
             logging.warning("Daily reward chest and opened chest template not detected. No rewards to collect.")
             return 0
 
-    # Step 3: Proceed to collect rewards if the chest was clicked
+    # Step 3: Close the daily rewards screen if it's open
+    logging.info("Attempting to close the daily rewards screen...")
+    if close_daily_reward_screen(threshold=threshold, duration_click=click_duration):
+        logging.info("Successfully closed the daily rewards screen.")
+    else:
+        logging.warning("Failed to close the daily rewards screen.")
+
+    logging.info("Finished the daily reward collection process.")
+    return 1  # Indicate success
+
+
+
+def claim_rewards(threshold=0.6, duration_click=0.5, max_duration=10):
+    """
+    Detect and claim rewards by clicking on matching templates with a lower threshold.
+    This function assumes that the rewards are visible on the screen and runs for a set duration.
+    
+    :param threshold: Confidence threshold for detecting rewards.
+    :param duration_click: Duration for moving and clicking the mouse.
+    :param max_duration: Maximum time (in seconds) to attempt claiming rewards.
+    :return: Total number of rewards claimed.
+    """
+    logging.info("Starting reward claim process...")
+
     rewards_folder = "images/rewards"
     reward_regex = re.compile(r"reward\d+\.png")
     reward_templates = [os.path.join(rewards_folder, file) for file in os.listdir(rewards_folder) if reward_regex.match(file)]
@@ -177,38 +203,34 @@ def check_daily_reward(duration=5, interval=0.1, threshold=0.8, click_duration=0
     start_time = time.time()
     rewards_collected_count = 0
 
-    while time.time() - start_time < duration:
+    while time.time() - start_time < max_duration:
         frame = capture_screen()
 
         for template_path in reward_templates:
             if template_path in collected_rewards:
-                continue  # Skip already collected rewards
+                continue  # Skip already claimed rewards
 
             try:
-                # Check for rewards and click the center of the screen
+                # Check for rewards with a lower threshold
                 if screen_check_once(frame, template_path, threshold):
                     logging.info(f"Reward detected using template: {template_path}")
-                    pyautogui.moveTo(pyautogui.size()[0] // 2, pyautogui.size()[1] // 2, duration=click_duration)
+                    # Click near the center of the screen (assuming rewards are centered)
+                    pyautogui.moveTo(pyautogui.size()[0] // 2, pyautogui.size()[1] // 2, duration=duration_click)
                     pyautogui.click()
-                    logging.info("Clicked to collect the reward.")
+                    logging.info("Clicked to claim the reward.")
                     collected_rewards.add(template_path)
                     rewards_collected_count += 1
             except TemplateMatchException:
                 logging.debug(f"No match for template: {template_path}")
 
-        # Step 4: Check and close the daily reward collected screen
-        close_daily_reward_screen(threshold=threshold, duration_click=click_duration)
-        time.sleep(interval)
+        time.sleep(0.5)  # Allow time before the next check
 
-    # Final logging
     if rewards_collected_count > 0:
-        logging.info(f"Daily rewards collection completed. Total rewards collected: {rewards_collected_count}.")
+        logging.info(f"Rewards claim process completed. Total rewards claimed: {rewards_collected_count}.")
     else:
-        logging.info("No additional rewards detected during the collection period.")
+        logging.info("No rewards detected during the claim process.")
 
     return rewards_collected_count
-
-
 
 
 def close_daily_reward_screen(threshold=0.8, duration_click=0.5):
@@ -222,8 +244,10 @@ def close_daily_reward_screen(threshold=0.8, duration_click=0.5):
             logging.info("Closed the daily reward collected screen.")
             return True
     except (TemplateMatchException, ButtonNotFoundException):
+        logging.warning("Failed to detect or close the daily reward collected screen.")
         pass
     return False
+
 
 def screen_check_confidence(screenshot, template_path):
     """

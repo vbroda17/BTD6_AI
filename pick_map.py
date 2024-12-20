@@ -120,9 +120,114 @@ def pick_map():
         click_return_button()
         return None
 
+def select_mode():
+    """
+    Collect user input for difficulty and mode first, then perform the required clicks.
+    Accepts full difficulty/mode names or their shorthand versions.
+    Returns the selected difficulty and mode, or None if an error occurs.
+    """
+    logging.info("Starting 'Select Mode' workflow...")
+
+    # Define available difficulties and their button paths
+    difficulties = {
+        "E": BUTTON_EASY,
+        "M": BUTTON_MEDIUM,
+        "H": BUTTON_HARD,
+        "EASY": BUTTON_EASY,
+        "MEDIUM": BUTTON_MEDIUM,
+        "HARD": BUTTON_HARD
+    }
+
+    # Define available modes for each difficulty
+    modes_by_difficulty = {
+        "EASY": {
+            "STANDARD": BUTTON_STANDARD,
+            "SANDBOX": BUTTON_SANDBOX,
+            "PRIMARY ONLY": BUTTON_PRIMARY_ONLY,
+        },
+        "MEDIUM": {
+            "REVERSE": BUTTON_REVERSE,
+            "MILITARY ONLY": BUTTON_MILITARY_ONLY,
+            "ALTERNATE BLOONS ROUNDS": BUTTON_ALTERNATE_BLOONS_ROUNDS,
+        },
+        "HARD": {
+            "IMPOPPABLE": BUTTON_IMPOPPABLE,
+            "CHIMPS": BUTTON_CHIMPS,
+            "DOUBLE HP MOABS": BUTTON_DOUBLE_HP_MOABS,
+            "HALF CASH": BUTTON_HALF_CASH,
+        }
+    }
+
+    # Step 1: Collect user input for difficulty
+    selected_difficulty = None
+    while not selected_difficulty:
+        difficulty_input = input("Enter difficulty (Easy, Medium, Hard or e/m/h): ").strip().upper()
+        selected_difficulty_button = difficulties.get(difficulty_input)
+        if selected_difficulty_button:
+            selected_difficulty = {
+                "E": "EASY",
+                "M": "MEDIUM",
+                "H": "HARD"
+            }.get(difficulty_input, difficulty_input)
+            logging.info(f"User selected difficulty: {selected_difficulty}")
+        else:
+            print("Invalid input. Please enter Easy, Medium, Hard, or their initials (e/m/h).")
+
+    # Step 2: Collect user input for mode
+    selected_mode = None
+    available_modes = modes_by_difficulty[selected_difficulty]
+    while not selected_mode:
+        print(f"Available modes for {selected_difficulty}: {', '.join(available_modes.keys())}")
+        mode_input = input("Enter the map mode: ").strip().upper()
+        if mode_input in available_modes:
+            selected_mode = mode_input
+            logging.info(f"User selected mode: {selected_mode}")
+        else:
+            print("Invalid input. Please enter a valid mode from the list above.")
+
+    # Step 3: Perform the clicks
+    try:
+        # Click difficulty button
+        logging.info(f"Clicking difficulty button: {selected_difficulty}")
+        click_item_with_spin(difficulties[selected_difficulty], duration=3, interval=0.1)
+        logging.info(f"Successfully clicked difficulty: {selected_difficulty}")
+
+        # Click mode button
+        logging.info(f"Clicking mode button: {selected_mode}")
+        click_item_with_spin(available_modes[selected_mode], duration=3, interval=0.1)
+        logging.info(f"Successfully clicked mode: {selected_mode}")
+
+        return selected_difficulty, selected_mode
+    except Exception as e:
+        logging.error(f"Error during mode selection process: {e}")
+        print("An error occurred while processing your selection. Returning to main menu...")
+        click_return_to_main_menu()
+        return None
+
+
+def click_return_to_main_menu():
+    """
+    Click the return button repeatedly to get back to the main menu.
+    """
+    logging.info("Clicking 'Return' to navigate back to the MAIN MENU...")
+    while True:
+        try:
+            click_item_with_spin(RETURN_BUTTON_TEMPLATE_PATH, duration=2, interval=0.5)
+            if screen_check_with_spin(MAIN_MENU_TEMPLATE_PATH, duration=5, interval=0.5):
+                logging.info("Successfully returned to the MAIN MENU.")
+                break
+        except ButtonNotFoundException:
+            logging.warning("Return button not found, retrying...")
+            time.sleep(0.5)
+
+
 if __name__ == "__main__":
+    # Will want hero function first
     selected_map = pick_map()
     if selected_map:
         print(f"Map selected: {selected_map}")
     else:
         print("No map was selected.")
+        # Catch an error to repeate pick or start over process with hero
+    # If map selected
+    selected_mode = select_mode()
