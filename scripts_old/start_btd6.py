@@ -87,7 +87,7 @@ def start_btd6():
         wait_for_main_menu()
 
         # Step 6: Collect daily rewards if available
-        check_daily_reward()
+        # check_daily_reward()
 
         # Future steps:
         # elif is_btd6_launched(): 

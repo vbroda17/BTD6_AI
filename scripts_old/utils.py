@@ -150,34 +150,25 @@ def check_daily_reward(duration=5, interval=0.1, threshold=0.8, click_duration=0
     # Step 1: Attempt to find and click the daily reward chest
     try:
         logging.info("Looking for the daily reward chest...")
-        chest_clicked = spin_until(
-            lambda: click_button(DAILY_REWARD_CHEST_PATH, threshold=threshold, duration=click_duration, clicks=1),
-            duration=2,
-            interval=0.1
-        )
-        if chest_clicked:
-            logging.info("Daily reward chest clicked. Waiting for rewards screen...")
-            time.sleep(2)  # Wait for rewards screen to load
-            claim_rewards(threshold=0.6, duration_click=click_duration)  # Call the claim_rewards function
-        else:
-            logging.warning("Failed to click the daily reward chest.")
+        click_item_with_spin(DAILY_REWARD_CHEST_PATH)
+
+        claim_rewards(threshold=0.6, duration_click=click_duration)  # Call the claim_rewards function
+        close_daily_reward_screen(threshold=threshold, duration_click=click_duration)
+
     except ButtonNotFoundException:
         # Step 2: If chest not found, check if it's already opened
-        logging.info("Daily reward chest not found. Checking if the chest was already opened...")
-        try:
-            if screen_check_with_spin(DAILY_REWARD_OPENED_TEMPLATE, duration=2, interval=0.1, threshold=threshold):
-                logging.info("Daily reward chest has already been collected. Moving on.")
-                return 0
-        except TemplateMatchException:
-            logging.warning("Daily reward chest and opened chest template not detected. No rewards to collect.")
-            return 0
+        logging.info("Daily reward chest not found. Allready collected")
+        return 0
+    except TemplateMatchException:
+        logging.warning("Daily reward chest and opened chest template not detected. No rewards to collect.")
+        return 0
 
     # Step 3: Close the daily rewards screen if it's open
     logging.info("Attempting to close the daily rewards screen...")
-    if close_daily_reward_screen(threshold=threshold, duration_click=click_duration):
-        logging.info("Successfully closed the daily rewards screen.")
-    else:
-        logging.warning("Failed to close the daily rewards screen.")
+    # if :
+    #     logging.info("Successfully closed the daily rewards screen.")
+    # else:
+    #     logging.warning("Failed to close the daily rewards screen.")
 
     logging.info("Finished the daily reward collection process.")
     return 1  # Indicate success
