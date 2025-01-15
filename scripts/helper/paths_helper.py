@@ -16,34 +16,27 @@ def create_paths_file(base_dir, output_file="paths.py"):
 
         # Traverse the directory and its subdirectories
         for root, dirs, files in os.walk(base_dir):
-            # Extract first subfolder for comment
-            relative_root = os.path.relpath(root, base_dir)
-            first_subfolder = relative_root.split(os.sep)[0].upper() if os.sep in relative_root else None
+            # Extract relative path for comments
+            relative_root = os.path.relpath(root, base_dir).replace("\\", "/")
+            if relative_root == ".":
+                relative_root = ""
 
-            # Add comment for the first subfolder
-            if first_subfolder and first_subfolder != ".":
-                f.write(f"# {first_subfolder}\n")
-
-            # Create a constant name for the current directory
-            dir_constant_name = (
-                os.path.relpath(root, base_dir)
-                .replace(os.sep, "_")
-                .upper()
-                .replace(".", "_")
-            )
-            dir_constant_name = f"{dir_constant_name}_DIR" if dir_constant_name != "." else "BASE_DIR"
-            dir_path = os.path.relpath(root).replace("\\", "/")
-            f.write(f'{dir_constant_name} = "{dir_path}"\n')
+            # Generate a hierarchical comment with parent and child folders
+            folder_hierarchy = relative_root.replace("/", " - ").upper()
+            if folder_hierarchy:
+                f.write(f"# {folder_hierarchy}\n")
 
             # Create constants for each file in the directory
             for file in files:
-                file_constant_name = (
-                    f"{dir_constant_name}_{os.path.splitext(file)[0]}"
-                    .replace(".", "_")
-                    .upper()
-                )
-                file_path = os.path.relpath(os.path.join(root, file)).replace("\\", "/")
-                f.write(f'{file_constant_name} = "{file_path}"\n')
+                if file.endswith('.png'):
+                    file_constant_name = (
+                        f"{relative_root}/{os.path.splitext(file)[0]}"
+                        .replace("/", "_")
+                        .replace(".", "_")
+                        .upper()
+                    )
+                    file_path = os.path.relpath(os.path.join(root, file)).replace("\\", "/")
+                    f.write(f'{file_constant_name} = "{file_path}"\n')
 
         print(f"Paths file '{output_file}' created successfully.")
 
