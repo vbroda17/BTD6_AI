@@ -3,7 +3,6 @@
 
 # BUTTONS
 BUTTONS_BUTTONCLAIM = "images/buttons/buttonClaim.png"
-BUTTONS_BUTTONLATESTSAVE = "images/buttons/buttonLatestSave.png"
 BUTTONS_BUTTONPLAY = "images/buttons/buttonPlay.png"
 BUTTONS_BUTTONSTART = "images/buttons/buttonStart.png"
 BUTTONS_BUTTONX = "images/buttons/buttonX.png"
@@ -44,34 +43,35 @@ BUTTONS_MAPMODES_POPUPOVERWRITE = "images/buttons/mapModes/popupOverwrite.png"
 # GOLDENBALLON
 GOLDENBALLON_GOLDENBALLON = "images/goldenBallon/goldenballon.png"
 # REWARDS
-REWARDS_DAILYCHEST = "images/rewards/dailyChest.png"
-REWARDS_DAILYCHESTCHRISMAS = "images/rewards/dailyChestChrismas.png"
-REWARDS_DAILYCHESTOPENED = "images/rewards/dailyChestOpened.png"
-REWARDS_DAILYCHESTOPENEDCHRISMAS = "images/rewards/dailyChestOpenedChrismas.png"
 REWARDS_REWARD1 = "images/rewards/reward1.png"
 REWARDS_REWARD2 = "images/rewards/reward2.png"
 REWARDS_REWARD3 = "images/rewards/reward3.png"
 REWARDS_REWARDINSTAMONKEY = "images/rewards/rewardInstaMonkey.png"
 REWARDS_REWARDMONEY = "images/rewards/rewardMoney.png"
-# SAVED_GAME
-SAVED_GAME_CHOOSESAVEDGAME = "images/saved_game/chooseSavedGame.png"
-SAVED_GAME_LATESTSAVE = "images/saved_game/latestSave.png"
-SAVED_GAME_OLDERSAVE = "images/saved_game/olderSave.png"
-SAVED_GAME_ONTHECLOUD = "images/saved_game/onTheCloud.png"
-SAVED_GAME_THISDEVICE = "images/saved_game/thisDevice.png"
 # SCREENS
-SCREENS_DAILYREWARDCOLLECTEDSCREEN = "images/screens/dailyrewardCollectedScreen.png"
-SCREENS_DAILYREWARDCOLLECTEDSCREENCHRISMAS = "images/screens/dailyrewardCollectedScreenChrismas.png"
-SCREENS_LOADINGSCREEN = "images/screens/loadingScreen.png"
 SCREENS_MAINMENUSCREEN = "images/screens/mainmenuScreen.png"
-SCREENS_MAINMENUSCREENCHRISMAS = "images/screens/mainmenuScreenChrismas.png"
 SCREENS_SELECTSCREEN = "images/screens/selectScreen.png"
-SCREENS_STARTSCREEN = "images/screens/startScreen.png"
 # START_BTD6
 # START_BTD6 - CHEST
+START_BTD6_CHEST_DAILYCHEST = "images/start_BTD6/chest/dailyChest.png"
+START_BTD6_CHEST_DAILYCHESTOPENED = "images/start_BTD6/chest/dailyChestOpened.png"
+START_BTD6_CHEST_DAILYREWARDCOLLECTEDSCREEN = "images/start_BTD6/chest/dailyrewardCollectedScreen.png"
 # START_BTD6 - CHOOSE_SAVED_GAME
+START_BTD6_CHOOSE_SAVED_GAME_CHOOSESAVEDGAME = "images/start_BTD6/choose_saved_game/chooseSavedGame.png"
+START_BTD6_CHOOSE_SAVED_GAME_LATESTSAVE = "images/start_BTD6/choose_saved_game/latestSave.png"
+START_BTD6_CHOOSE_SAVED_GAME_OLDERSAVE = "images/start_BTD6/choose_saved_game/olderSave.png"
+START_BTD6_CHOOSE_SAVED_GAME_ONTHECLOUD = "images/start_BTD6/choose_saved_game/onTheCloud.png"
+START_BTD6_CHOOSE_SAVED_GAME_THISDEVICE = "images/start_BTD6/choose_saved_game/thisDevice.png"
+START_BTD6_CHOOSE_SAVED_GAME_USE = "images/start_BTD6/choose_saved_game/use.png"
 # START_BTD6 - DESKTOP
 START_BTD6_DESKTOP_BTD6_ICON = "images/start_BTD6/desktop/btd6_icon.png"
 START_BTD6_DESKTOP_BTD6_LAUNCH = "images/start_BTD6/desktop/btd6_launch.png"
 START_BTD6_DESKTOP_DESKTOP = "images/start_BTD6/desktop/desktop.png"
 # START_BTD6 - LOADING
+START_BTD6_LOADING_LOADINGSCREEN = "images/start_BTD6/loading/loadingScreen.png"
+START_BTD6_LOADING_STARTSCREEN = "images/start_BTD6/loading/startScreen.png"
+# THEMED_SPECIALS
+THEMED_SPECIALS_DAILYCHESTCHRISMAS = "images/themed_specials/dailyChestChrismas.png"
+THEMED_SPECIALS_DAILYCHESTOPENEDCHRISMAS = "images/themed_specials/dailyChestOpenedChrismas.png"
+THEMED_SPECIALS_DAILYREWARDCOLLECTEDSCREENCHRISMAS = "images/themed_specials/dailyrewardCollectedScreenChrismas.png"
+THEMED_SPECIALS_MAINMENUSCREENCHRISMAS = "images/themed_specials/mainmenuScreenChrismas.png"
