@@ -5,7 +5,7 @@ import numpy as np
 import logging
 import time
 import os
-from scripts.minnor.exceptions import *
+from scripts.minor.exceptions import *
 
 def capture_screen(debug=False):
   """Capture the current screen and return it as a NumPy array."""

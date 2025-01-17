@@ -4,8 +4,8 @@ import os
 # Add the project root to the system path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 # Import modules after adjusting the path
-from scripts.minnor.utils import *
-from scripts.minnor.paths import *
+from scripts.minor.utils import *
+from scripts.minor.paths import *
 
 logging.basicConfig(level=logging.INFO)
 

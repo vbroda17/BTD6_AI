@@ -1,3 +1,6 @@
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 from major.btd6_start import *
 
 def pipeline():
@@ -5,7 +8,7 @@ def pipeline():
     Main pipeline to start BTD6 and execute additional functionality.
     """
     logging.info("Starting BTD6 pipeline...")
-    start_btd6()
+    btd6_start()
     # Future functionality:
     # test_functions()
     # train_model()
