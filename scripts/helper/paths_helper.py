@@ -43,6 +43,6 @@ def create_paths_file(base_dir, output_file="paths.py"):
 if __name__ == "__main__":
     # Hardcoded paths based on provided structure
     base_dir = "images"
-    output_file = "scripts/minnor/paths.py"
+    output_file = "scripts/minor/paths.py"
 
     create_paths_file(base_dir=base_dir, output_file=output_file)
